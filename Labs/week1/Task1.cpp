@@ -1,11 +1,18 @@
 #include <iostream>
 #include <lodepng.h>
-
+void setPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b, uint8_t a, std::vector<uint8_t>& imageBuffer, int width, int nChannels) 
+{
+	int pixelIdx = x + y * width;
+	imageBuffer[pixelIdx * nChannels + 0] = r; // Set red pixel values to 0
+	imageBuffer[pixelIdx * nChannels + 1] = g; // Set green pixel values to 255 (full brightness)
+	imageBuffer[pixelIdx * nChannels + 2] = b; // Set blue pixel values to 255 (full brightness)
+	imageBuffer[pixelIdx * nChannels + 3] = a; // Set alpha (transparency) pixel values to 255 (fully opaque)
+}
 
 int main()
 {
 	std::string outputFilename = "output.png";
-
+	
 	const int width = 1920, height = 1080;
 	const int nChannels = 4;
 
@@ -17,12 +24,16 @@ int main()
 
 	// This for loop sets all the pixels of the image to a cyan colour. 
 	for(int y = 0; y < height; ++y) 
-		for (int x = 0; x < width; ++x) {
-			int pixelIdx = x + y * width;
-			imageBuffer[pixelIdx * nChannels + 0] = 0; // Set red pixel values to 0
-			imageBuffer[pixelIdx * nChannels + 1] = 255; // Set green pixel values to 255 (full brightness)
-			imageBuffer[pixelIdx * nChannels + 2] = 255; // Set blue pixel values to 255 (full brightness)
-			imageBuffer[pixelIdx * nChannels + 3] = 255; // Set alpha (transparency) pixel values to 255 (fully opaque)
+		for (int x = 0; x < width; ++x) 
+		{
+			setPixel(x, y, 255, 255, 255, 255, imageBuffer, width, nChannels);
+		}
+			
+
+	for (int y = 500; y < height; ++y)
+		for (int x = 0; x < width; ++x) 
+		{
+			setPixel(x, y, 55, 255, 255, 255, imageBuffer, width, nChannels);
 		}
 
 	/// *** Lab Tasks ***
