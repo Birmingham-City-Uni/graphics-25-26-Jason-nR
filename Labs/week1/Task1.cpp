@@ -15,6 +15,9 @@ int main()
 	
 	const int width = 1920, height = 1080;
 	const int nChannels = 4;
+	int x0 = width / 2;
+	int y0 = height / 2;
+	int radius = 200;
 
 	// Setting up an image buffer
 	// This std::vector has one 8-bit value for each pixel in each row and column of the image, and
@@ -33,8 +36,29 @@ int main()
 	for (int y = 500; y < height; ++y)
 		for (int x = 0; x < width; ++x) 
 		{
-			setPixel(x, y, 55, 255, 255, 255, imageBuffer, width, nChannels);
+			setPixel(x, y, 0, 255, 0, 255, imageBuffer, width, nChannels);
 		}
+
+	for (int y = 0; y < height; ++y)
+	{
+		for (int x = 0; x < width; ++x)
+		{
+			// background
+			if (y >= 500)
+				setPixel(x, y, 0, 255, 0, 255, imageBuffer, width, nChannels);
+			else
+				setPixel(x, y, 255, 255, 255, 255, imageBuffer, width, nChannels);
+
+			// circle on top
+			int dx = x - x0;
+			int dy = y - y0;
+
+			if (dx * dx + dy * dy < radius * radius)
+			{
+				setPixel(x, y, 255, 0, 0, 255, imageBuffer, width, nChannels);
+			}
+		}
+	}
 
 	/// *** Lab Tasks ***
 	// * Task 1: Try adapting the code above to set the lower half of the image to be a green colour.

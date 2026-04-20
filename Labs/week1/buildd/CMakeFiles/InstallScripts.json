@@ -1,0 +1,9 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Users/S24184757/Documents/GitHub/graphics-25-26-Jason-nR/Labs/week1/buildd/cmake_install.cmake",
+		"C:/Users/S24184757/Documents/GitHub/graphics-25-26-Jason-nR/Labs/week1/buildd/3rdParty/cmake_install.cmake",
+		"C:/Users/S24184757/Documents/GitHub/graphics-25-26-Jason-nR/Labs/week1/buildd/3rdParty/lodepng/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

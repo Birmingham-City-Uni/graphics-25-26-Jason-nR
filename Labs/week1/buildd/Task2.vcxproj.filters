@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\S24184757\Documents\GitHub\graphics-25-26-Jason-nR\Labs\week1\Task2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\S24184757\Documents\GitHub\graphics-25-26-Jason-nR\Labs\week1\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{846C0A79-E18B-3FDD-AE97-F7DB68F0513F}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

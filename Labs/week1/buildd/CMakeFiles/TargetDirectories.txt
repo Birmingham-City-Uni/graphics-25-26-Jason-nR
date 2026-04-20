@@ -1,0 +1,5 @@
+C:/Users/S24184757/Documents/GitHub/graphics-25-26-Jason-nR/Labs/week1/buildd/CMakeFiles/Task1.dir
+C:/Users/S24184757/Documents/GitHub/graphics-25-26-Jason-nR/Labs/week1/buildd/CMakeFiles/Task2.dir
+C:/Users/S24184757/Documents/GitHub/graphics-25-26-Jason-nR/Labs/week1/buildd/CMakeFiles/ALL_BUILD.dir
+C:/Users/S24184757/Documents/GitHub/graphics-25-26-Jason-nR/Labs/week1/buildd/CMakeFiles/ZERO_CHECK.dir
+C:/Users/S24184757/Documents/GitHub/graphics-25-26-Jason-nR/Labs/week1/buildd/3rdParty/lodepng/CMakeFiles/lodepng.dir

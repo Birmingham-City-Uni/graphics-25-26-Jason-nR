@@ -1,0 +1,36 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\S24184757\\Documents\\GitHub\\graphics-25-26-Jason-nR\\Labs\\week1\\buildd\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{C8092991-D3D7-3401-BA4A-29911F2E1288}|Task1.vcxproj|C:\\Users\\S24184757\\Documents\\GitHub\\graphics-25-26-Jason-nR\\Labs\\week1\\Task1.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Task1.cpp",
+              "DocumentMoniker": "C:\\Users\\S24184757\\Documents\\GitHub\\graphics-25-26-Jason-nR\\Labs\\week1\\Task1.cpp",
+              "RelativeDocumentMoniker": "..\\Task1.cpp",
+              "ToolTip": "C:\\Users\\S24184757\\Documents\\GitHub\\graphics-25-26-Jason-nR\\Labs\\week1\\Task1.cpp",
+              "RelativeToolTip": "..\\Task1.cpp",
+              "ViewState": "AgIAAC0AAAAAAAAAAAAAABMAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-04-20T13:45:15.04Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
