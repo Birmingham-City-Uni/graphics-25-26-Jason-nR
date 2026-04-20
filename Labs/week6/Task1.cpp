@@ -312,7 +312,7 @@ int main()
 
 	// *** END YOUR CODE ***
 
-	std::string bunnyFilename = "../models/stanford_bunny_texmapped.obj";
+	std::string bunnyFilename = "../models/gun.obj";
 
 	std::vector<std::unique_ptr<Light>> lights;
 	// I've already added an ambient light for you!
