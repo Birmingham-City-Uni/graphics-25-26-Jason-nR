@@ -1,0 +1,82 @@
+# Blender 5.1.1 MTL File: 'DavidFileSceneGears.blend'
+# www.blender.org
+
+newmtl 24_Body_0.5_0_0.004
+Ns 96.078415
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/BrumakBody_D.jpg
+
+newmtl 38_+Cannon.CannonArm_1_0_0.004
+Ns 96.078415
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/BrumakWeapons_D.jpg
+
+newmtl 38_+Cannon.CannonHead_1_0_0.004
+Ns 96.078415
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/BrumakWeapons_D.jpg
+
+newmtl 38_+GunL.GunL_1_0_0.004
+Ns 96.078415
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/BrumakWeapons_D.jpg
+
+newmtl 38_+GunR.GunR_1_0_0.004
+Ns 96.078415
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/BrumakWeapons_D.jpg
+
+newmtl 38_+Harness.Harness_1_0_0.004
+Ns 96.078415
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/BrumakArmor_D.jpg
+
+newmtl 38_+Helm.Helm_1_0_0.004
+Ns 96.078415
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/BrumakArmor_D.jpg
+
+newmtl 38_Eyes_1_0_0.004
+Ns 96.078415
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/BrumakEyes_E.jpg

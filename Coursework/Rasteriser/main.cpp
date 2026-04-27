@@ -8,6 +8,7 @@
 #include "LinAlg.hpp"
 #include "Light.hpp"
 #include "Mesh.hpp"
+#include <algorithm>
 
 // ***** WEEK 6 LAB *****
 // Subtask 1: Implement the projectionMatrix function, to make a projection matrix to view your scene!
@@ -36,8 +37,14 @@ Eigen::Matrix4f projectionMatrix(int height, int width, float horzFov = 70.f*M_P
 	// Make a projection matrix following the formulation in the lecture slides, and using the provided parameters.
 	// First, work out vertical FoV based on the horizontal FoV:
 	float vertFov = 0.f;
+	vertFov = (horzFov * height) / width;
+
 	// Now construct the matrix.
 	Eigen::Matrix4f projection;
+	projection << 1 / tanf(0.50f * horzFov), 0, 0, 0,
+		0, 1 / tanf(0.5f * vertFov), 0, 0,
+		0, 0, zFar / (zFar - zNear), (-zFar * zNear) / (zFar - zNear),
+		0, 0, 1, 0;
 	return projection;
 	// *** END YOUR CODE ***
 }
@@ -105,17 +112,23 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 			// zBuffer.png. This is encoded so further away objects are lighter in color. It should match
 			// the example_zBuffer.png image if your code is working!
 			// *** YOUR CODE HERE ***
-
+			
 			// First, work out the depth of this location in screen space. 
 			// We saved the clip space z values in t.screen[0].z(), t.screen[1].z() and t.screen[2].z.
 			// Use barycentric interpolation on these to work out the depth of this pixel.
-			float depth = 0.f;
-
+			float depth = t.screen[0].z() * b0 + t.screen[1].z() * b1 + t.screen[2].z() * b2;
+			
 			// Work out where to sample in the zBuffer. Remember the zBuffer has only one channel,
 			// so your index should be based on the pixel's x and y locations, and the width of the 
 			// z buffer only.
-			int depthIdx = 0;
+			int depthIdx = x + y * width;
 
+			if (depth > zBuffer[depthIdx])
+			{
+				continue;
+			}
+
+			zBuffer[depthIdx] = depth;
 			// If your depth is bigger than the current depth, skip drawing this pixel.
 			// Otherwise, replace the zBuffer value at depthIdx with this depth.
 			// ADD YOUR OWN CODE TO DO THIS HERE
@@ -133,13 +146,15 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 			// *** YOUR CODE HERE ***
 			// Add code to calculate the texture coordinates corresponding to P, texP.
 			// Use barycentric interpolation!
-			Eigen::Vector2f texP = Eigen::Vector2f::Zero();
+			Eigen::Vector2f texP = t.texs[0] * b0 + t.texs[1] * b1 + t.texs[2] * b2;
 
 			// Convert this coordinate to a point in texture space
 			// To do so, multiply by the texWidth and texHeight to get to the correct range.
 			// Don't forget to flip the y coordinates! 
-			int texR = 0;
-			int texC = 0;
+			int texR = (1- texP.y())* texHeight;
+			int texC = texP.x()*texWidth;
+			texR = std::min(std::max(texR, 0), texHeight - 1);
+			texC = std::min(std::max(texC, 0), texWidth- 1);
 			// Handle the case where texR or texC end up outside the image!
 			// There are different ways you could do this - for example using 
 			// the modulo (%) operator to wrap around, or clamping to the edges.
@@ -147,13 +162,13 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 			// that 0 <= texC < texWidth and 0 <= texR < texHeight.
 
 			// Get the value from the texture (hint: use the getPixel function on the albedoTexture).
-			Color texColor{ 255,255,255,255 };
+			Color texColor = getPixel(albedoTexture, texC, texR, texWidth, texHeight);
 
 			// Convert it into an Eigen::Vector3f as an albedo
 			// (Optional bonus task, if you checked out the slides on gamma correction:
 			// gamma correct this colour, so the texture doesn't appear overly bright.
 			// should you raise to the power 1/2.2, or 2.2?)
-			Eigen::Vector3f albedo = Eigen::Vector3f::Zero();
+			Eigen::Vector3f albedo = Eigen::Vector3f(texColor.r/255.f, texColor.g/255.f, texColor.b/255.f);
 
 			// *** END YOUR CODE ***
 
@@ -195,7 +210,7 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 
 			c.a = 255;
 
-			setPixel(image, x, y, width, height, c);
+			setPixel(image, width - x - 1, y, width, height, c);
 		}
 }
 
@@ -237,12 +252,23 @@ void drawMesh(std::vector<unsigned char>& image,
 		// skip drawing this triangle.
 		// Hint: use the outsideClipBox function to do this.
 		// Finally, work out the screen space coordinates based on the image height and width.
+		
 
 		// Work out the clip space coordinates, by multiplying by worldToClip and doing the 
 		// perspective divide.
-		Eigen::Vector4f vClip0 = Eigen::Vector4f::Zero();
-		Eigen::Vector4f vClip1 = Eigen::Vector4f::Zero();
-		Eigen::Vector4f vClip2 = Eigen::Vector4f::Zero();
+		Eigen::Vector4f vClip0 = worldToClip * vec3ToVec4(t.verts[0]);
+		Eigen::Vector4f vClip1 = worldToClip * vec3ToVec4(t.verts[1]);
+		Eigen::Vector4f vClip2 = worldToClip * vec3ToVec4(t.verts[2]);
+
+		vClip0 /= vClip0.w();
+		vClip1 /= vClip1.w();
+		vClip2 /= vClip2.w();
+
+		if (outsideClipBox(vClip0) || outsideClipBox(vClip1) || outsideClipBox(vClip2))
+		{
+
+			continue;
+		}
 
 		// Check that all 3 vertices are in the clip box (-1 to 1 in x, y and z) and if not,
 		// skip drawing this triangle.
@@ -251,9 +277,9 @@ void drawMesh(std::vector<unsigned char>& image,
 		// Work out the screen space coordinates based on the image height and width.
 		// Set the z component of each screen coordinate to be the clip-space z (for example
 		// t.screen[0].z() == vClip0.z());
-		t.screen[0] = Eigen::Vector3f::Zero();
-		t.screen[1] = Eigen::Vector3f::Zero();
-		t.screen[2] = Eigen::Vector3f::Zero();
+		t.screen[0] = Eigen::Vector3f(((vClip0.x() + 1)/2)* width, ((-vClip0.y() + 1)/2)*height, vClip0.z());
+		t.screen[1] = Eigen::Vector3f(((vClip1.x() + 1) / 2) * width, ((-vClip1.y() + 1) / 2) * height, vClip1.z());
+		t.screen[2] = Eigen::Vector3f(((vClip2.x() + 1) / 2) * width, ((-vClip2.y() + 1) / 2) * height, vClip2.z());
 		// *** END YOUR CODE ***
 
 		// transform the normals (using the inverse transpose of the upper 3x3 block)
@@ -274,7 +300,7 @@ int main()
 {
 	std::string outputFilename = "output.png";
 
-	const int width = 512, height = 512;
+	const int width = 1920, height = 1080;
 	const int nChannels = 4;
 
 	// Setting up an image buffer
@@ -302,17 +328,19 @@ int main()
 
 	// This matrix rotates the camera, tilting it down, then translates it up to make it look down on the scene.
 	// Once your code is working, try changing this to move the camera around!
-	Eigen::Matrix4f cameraToWorld = translationMatrix(Eigen::Vector3f(0.f, 0.8f, 0.f)) * rotateXMatrix(0.4f);
+	Eigen::Matrix4f cameraToWorld = translationMatrix(Eigen::Vector3f(0.f, 0.0f, 0.f)) * rotateXMatrix(-0.2f) * rotateZMatrix(0.1);
 
 	// The main important task = set up the worldToCamera and worldToClip matrices here!
 	// Set up worldToCamera, based on cameraToWorld above
 	Eigen::Matrix4f worldToCamera;
+	worldToCamera = cameraToWorld.inverse();
+	
 	// Set up worldToClip, using the projection and worldToCamera matrices
 	Eigen::Matrix4f worldToClip;
-
+	worldToClip = projection * worldToCamera;
 	// *** END YOUR CODE ***
 
-	std::string bunnyFilename = "../models/stanford_bunny_texmapped.obj";
+	std::string bunnyFilename = "../models/brumak.obj";
 
 	std::vector<std::unique_ptr<Light>> lights;
 	// I've already added an ambient light for you!
@@ -331,18 +359,9 @@ int main()
 	unsigned int bunnyTexWidth, bunnyTexHeight;
 	lodepng::decode(bunnyTexture, bunnyTexWidth, bunnyTexHeight, "../models/stanford_bunny_albedo.png");
 
-	bunnyTransform = translationMatrix(Eigen::Vector3f(-1.0f, -1.0f, 3.f)) * rotateYMatrix(M_PI);
+	bunnyTransform = translationMatrix(Eigen::Vector3f(1.1f, 0.0f, 6.f)) * rotateYMatrix(M_PI* 1.05) * scaleMatrix(0.3);
 	drawMesh(imageBuffer, zBuffer, bunnyMesh, bunnyTexture, bunnyTexWidth, bunnyTexHeight, bunnyTransform, worldToClip, lights, width, height);
-	bunnyTransform = translationMatrix(Eigen::Vector3f(-1.0f, -1.0f, 5.f)) * rotateYMatrix(M_PI);
-	drawMesh(imageBuffer, zBuffer, bunnyMesh, bunnyTexture, bunnyTexWidth, bunnyTexHeight, bunnyTransform, worldToClip, lights, width, height);
-	bunnyTransform = translationMatrix(Eigen::Vector3f(-1.0f, -1.0f, 7.f)) * rotateYMatrix(M_PI);
-	drawMesh(imageBuffer, zBuffer, bunnyMesh, bunnyTexture, bunnyTexWidth, bunnyTexHeight, bunnyTransform, worldToClip, lights, width, height);
-	bunnyTransform = translationMatrix(Eigen::Vector3f(1.0f, -1.0f, 3.f)) * rotateYMatrix(M_PI);
-	drawMesh(imageBuffer, zBuffer, bunnyMesh, bunnyTexture, bunnyTexWidth, bunnyTexHeight, bunnyTransform, worldToClip, lights, width, height);
-	bunnyTransform = translationMatrix(Eigen::Vector3f(1.0f, -1.0f, 5.f)) * rotateYMatrix(M_PI);
-	drawMesh(imageBuffer, zBuffer, bunnyMesh, bunnyTexture, bunnyTexWidth, bunnyTexHeight, bunnyTransform, worldToClip, lights, width, height);
-	bunnyTransform = translationMatrix(Eigen::Vector3f(1.0f, -1.0f, 7.f)) * rotateYMatrix(M_PI);
-	drawMesh(imageBuffer, zBuffer, bunnyMesh, bunnyTexture, bunnyTexWidth, bunnyTexHeight, bunnyTransform, worldToClip, lights, width, height);
+	
 
 	// For debug - draw point lights as colored circles so we can see where they are
 	drawPointLights(imageBuffer, width, height, lights);

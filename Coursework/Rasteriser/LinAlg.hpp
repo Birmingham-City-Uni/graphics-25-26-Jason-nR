@@ -55,6 +55,7 @@ Eigen::Matrix4f rotateXMatrix(float theta)
 		0.f, 0.f, 0.f, 1.f;
 	return output;
 }
+
 Eigen::Matrix4f rotateYMatrix(float theta)
 {
 	// *** Your code here ***
@@ -63,6 +64,17 @@ Eigen::Matrix4f rotateYMatrix(float theta)
 		cosf(theta), 0, sinf(theta), 0.f,
 		0.f, 1.f, 0.f, 0.f,
 		-sinf(theta), 0.f, cosf(theta), 0.f,
+		0.f, 0.f, 0.f, 1.f;
+	return output;
+}
+Eigen::Matrix4f rotateZMatrix(float theta)
+{
+	// *** Your code here ***
+	Eigen::Matrix4f output;
+	output <<
+		cosf(theta), -sinf(theta), 0.f, 0.f,
+		sinf(theta), cosf(theta), 0, 0.f,
+		0.f, 0, 1, 0.f,
 		0.f, 0.f, 0.f, 1.f;
 	return output;
 }
