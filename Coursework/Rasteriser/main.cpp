@@ -357,7 +357,7 @@ int main()
 
 	std::vector<uint8_t> bunnyTexture;
 	unsigned int bunnyTexWidth, bunnyTexHeight;
-	lodepng::decode(bunnyTexture, bunnyTexWidth, bunnyTexHeight, "../models/stanford_bunny_albedo.png");
+	lodepng::decode(bunnyTexture, bunnyTexWidth, bunnyTexHeight, "../models/BrumakBody_D.jpg");
 
 	bunnyTransform = translationMatrix(Eigen::Vector3f(1.1f, 0.0f, 6.f)) * rotateYMatrix(M_PI* 1.05) * scaleMatrix(0.3);
 	drawMesh(imageBuffer, zBuffer, bunnyMesh, bunnyTexture, bunnyTexWidth, bunnyTexHeight, bunnyTransform, worldToClip, lights, width, height);
