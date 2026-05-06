@@ -27,7 +27,13 @@ struct Triangle {
 	std::array<Eigen::Vector3f, 3> norms; // Normals of the triangle corners in world space.
 	std::array<Eigen::Vector2f, 3> texs; // Texture coordinates of the triangle corners.
 };
-
+struct Submesh {
+    std::vector<std::array<int, 3>> vFaces; // Vertex indices
+    std::vector<std::array<int, 3>> tFaces; // Texture indices
+    std::vector<std::array<int, 3>> nFaces; // Normal indices
+    std::vector<uint8_t> texture;           // The actual image data
+    int texWidth, texHeight;
+};
 
 Eigen::Matrix4f projectionMatrix(int height, int width, float horzFov = 70.f*M_PI/180.f, float zFar = 10.f, float zNear = 0.1f)
 {
@@ -295,6 +301,12 @@ void drawMesh(std::vector<unsigned char>& image,
 	}
 }
 
+struct RenderObject {
+	Mesh mesh;
+	std::vector<uint8_t> texture;
+	unsigned int texWidth, texHeight;
+	Eigen::Matrix4f transform;
+};
 
 int main()
 {
@@ -340,27 +352,45 @@ int main()
 	worldToClip = projection * worldToCamera;
 	// *** END YOUR CODE ***
 
-	std::string bunnyFilename = "../models/brumak.obj";
+	
 
 	std::vector<std::unique_ptr<Light>> lights;
+	std::vector<RenderObject> sceneObjects;
 	// I've already added an ambient light for you!
 	lights.emplace_back(new AmbientLight(Eigen::Vector3f(0.1f, 0.1f, 0.1f)));
-
 	//lights.emplace_back(new PointLight(Eigen::Vector3f(1.1f, 1.1f, 1.1f), Eigen::Vector3f(0.f, 1.0f, 0.f)));
 	lights.emplace_back(new DirectionalLight(Eigen::Vector3f(0.4f, 0.4f, 0.4f), Eigen::Vector3f(1.f, 0.f, 0.0f)));
 	//lights.emplace_back(new SpotLight(Eigen::Vector3f(10.0f, 0.0f, 0.0f), Eigen::Vector3f(0.f, 1.f, 0.0f), Eigen::Vector3f(0, -1, 0), M_PI/8));
 
-	Mesh bunnyMesh = loadMeshFile(bunnyFilename);
+	//Brumak
+	RenderObject Brbody;
+	Brbody.mesh = loadMeshFile("../models/BrumakBody.obj");
+	lodepng::decode(Brbody.texture, Brbody.texWidth, Brbody.texHeight, "../models/BrumakBody_D.png");
+	Brbody.transform = translationMatrix(Eigen::Vector3f(1.1f, 0.0f, 6.f)) * rotateYMatrix(M_PI * 1.05) * scaleMatrix(0.3);
+	sceneObjects.push_back(std::move(Brbody));
+	RenderObject Brguns;
+	Brguns.mesh = loadMeshFile("../models/BrumakGuns.obj");
+	lodepng::decode(Brguns.texture, Brguns.texWidth, Brguns.texHeight, "../models/BrumakWeapons_D.png");
+	Brguns.transform = Brbody.transform;
+	sceneObjects.push_back(std::move(Brguns));
+	RenderObject Brarmor;
+	Brarmor.mesh = loadMeshFile("../models/BrumakArmor.obj");
+	lodepng::decode(Brarmor.texture, Brarmor.texWidth, Brarmor.texHeight, "../models/BrumakArmor_D.png");
+	Brarmor.transform = Brbody.transform;
+	sceneObjects.push_back(std::move(Brarmor));
+
+	//Cole Train
+	RenderObject Cobody;
+	Cobody.mesh = loadMeshFile("../models/Brumak.obj");
+	lodepng::decode(Cobody.texture, Cobody.texWidth, Cobody.texHeight, "../models/stanford_bunny_albedo.png");
+	Cobody.transform = translationMatrix(Eigen::Vector3f(2.1f, 0.0f, 2.f)) * rotateYMatrix(M_PI * 1.05) * scaleMatrix(0.3);
 
 
-	Eigen::Matrix4f bunnyTransform; 
-
-	std::vector<uint8_t> bunnyTexture;
-	unsigned int bunnyTexWidth, bunnyTexHeight;
-	lodepng::decode(bunnyTexture, bunnyTexWidth, bunnyTexHeight, "../models/BrumakBody_D.jpg");
-
-	bunnyTransform = translationMatrix(Eigen::Vector3f(1.1f, 0.0f, 6.f)) * rotateYMatrix(M_PI* 1.05) * scaleMatrix(0.3);
-	drawMesh(imageBuffer, zBuffer, bunnyMesh, bunnyTexture, bunnyTexWidth, bunnyTexHeight, bunnyTransform, worldToClip, lights, width, height);
+	for (const auto& obj : sceneObjects) {
+		drawMesh(imageBuffer, zBuffer, obj.mesh, obj.texture, obj.texWidth, obj.texHeight,
+			obj.transform, worldToClip, lights, width, height);
+	}
+	
 	
 
 	// For debug - draw point lights as colored circles so we can see where they are
