@@ -1,0 +1,13 @@
+# Blender 5.1.1 MTL File: 'DavidFileSceneGears.blend'
+# www.blender.org
+
+newmtl Mat.005
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd C:/cog_classiccole_body01.jpg
+map_Bump -bm 1.000000 C:/cog_classiccole_body01Normal_4.jpg

@@ -35,7 +35,7 @@ struct Submesh {
     int texWidth, texHeight;
 };
 
-Eigen::Matrix4f projectionMatrix(int height, int width, float horzFov = 70.f*M_PI/180.f, float zFar = 10.f, float zNear = 0.1f)
+Eigen::Matrix4f projectionMatrix(int height, int width, float horzFov = 70.f*M_PI/180.f, float zFar = 100.f, float zNear = 0.1f)
 {
 	// ========= Subtask 1: Make a Projection Matrix ========
 	// *** YOUR CODE HERE ***
@@ -75,7 +75,8 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 	std::vector<float>& zBuffer,
 	const Triangle& t,
 	const std::vector<std::unique_ptr<Light>>& lights,
-	const std::vector<uint8_t>& albedoTexture, int texWidth, int texHeight)
+	const std::vector<uint8_t>& albedoTexture, int texWidth, int texHeight,
+	const std::vector<uint8_t>& emissionTexture,  int emissionWidth, int emissionHeight)
 {
 	int minX, minY, maxX, maxY;
 	findScreenBoundingBox(t, width, height, minX, minY, maxX, maxY);
@@ -159,8 +160,10 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 			// Don't forget to flip the y coordinates! 
 			int texR = (1- texP.y())* texHeight;
 			int texC = texP.x()*texWidth;
-			texR = std::min(std::max(texR, 0), texHeight - 1);
-			texC = std::min(std::max(texC, 0), texWidth- 1);
+			texR = texR % texHeight;
+			texC = texC % texWidth;
+			if (texR < 0) texR += texHeight;
+			if (texC < 0) texC += texWidth;
 			// Handle the case where texR or texC end up outside the image!
 			// There are different ways you could do this - for example using 
 			// the modulo (%) operator to wrap around, or clamping to the edges.
@@ -169,6 +172,11 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 
 			// Get the value from the texture (hint: use the getPixel function on the albedoTexture).
 			Color texColor = getPixel(albedoTexture, texC, texR, texWidth, texHeight);
+			int eTexC = texC * (float)emissionWidth / texWidth;
+			int eTexR = texR * (float)emissionHeight / texHeight;
+			Color texEmission = getPixel(emissionTexture, eTexC, eTexR, emissionWidth, emissionHeight);
+			float emission = texEmission.r/255.0f;
+			Eigen::Vector3f emissionColor(1, 1, 0);
 
 			// Convert it into an Eigen::Vector3f as an albedo
 			// (Optional bonus task, if you checked out the slides on gamma correction:
@@ -207,6 +215,7 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 				// Now add the intensity times the albedo.
 				color += coeffWiseMultiply(lightIntensity, albedo);
 			}
+			color += emission * emissionColor;
 
 			Color c;
 			// Gamma-correcting colours.
@@ -224,8 +233,9 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 
 void drawMesh(std::vector<unsigned char>& image,
 	std::vector<float>& zBuffer,
-	const Mesh& mesh, 
+	const Mesh& mesh,
 	const std::vector<uint8_t>& albedoTexture, int texWidth, int texHeight,
+	const std::vector<uint8_t>& emissionTexture, int emissionWidth, int emissionHeight,
 	const Eigen::Matrix4f& modelToWorld, 
 	const Eigen::Matrix4f& worldToClip, 
 	const std::vector<std::unique_ptr<Light>>& lights,
@@ -297,14 +307,15 @@ void drawMesh(std::vector<unsigned char>& image,
 		t.texs[1] = mesh.texs[mesh.tFaces[i][1]];
 		t.texs[2] = mesh.texs[mesh.tFaces[i][2]];
 
-		drawTriangle(image, width, height, zBuffer, t, lights, albedoTexture, texWidth, texHeight);
+		drawTriangle(image, width, height, zBuffer, t, lights, albedoTexture, texWidth, texHeight, emissionTexture, emissionWidth, emissionHeight);
 	}
 }
 
 struct RenderObject {
 	Mesh mesh;
 	std::vector<uint8_t> texture;
-	unsigned int texWidth, texHeight;
+	std::vector<uint8_t> emissionTexture;
+	unsigned int texWidth, texHeight, emissionWidth, emissionHeight;
 	Eigen::Matrix4f transform;
 };
 
@@ -362,32 +373,117 @@ int main()
 	lights.emplace_back(new DirectionalLight(Eigen::Vector3f(0.4f, 0.4f, 0.4f), Eigen::Vector3f(1.f, 0.f, 0.0f)));
 	//lights.emplace_back(new SpotLight(Eigen::Vector3f(10.0f, 0.0f, 0.0f), Eigen::Vector3f(0.f, 1.f, 0.0f), Eigen::Vector3f(0, -1, 0), M_PI/8));
 
-	//Brumak
-	RenderObject Brbody;
-	Brbody.mesh = loadMeshFile("../models/BrumakBody.obj");
-	lodepng::decode(Brbody.texture, Brbody.texWidth, Brbody.texHeight, "../models/BrumakBody_D.png");
-	Brbody.transform = translationMatrix(Eigen::Vector3f(1.1f, 0.0f, 6.f)) * rotateYMatrix(M_PI * 1.05) * scaleMatrix(0.3);
-	sceneObjects.push_back(std::move(Brbody));
-	RenderObject Brguns;
-	Brguns.mesh = loadMeshFile("../models/BrumakGuns.obj");
-	lodepng::decode(Brguns.texture, Brguns.texWidth, Brguns.texHeight, "../models/BrumakWeapons_D.png");
-	Brguns.transform = Brbody.transform;
-	sceneObjects.push_back(std::move(Brguns));
-	RenderObject Brarmor;
-	Brarmor.mesh = loadMeshFile("../models/BrumakArmor.obj");
-	lodepng::decode(Brarmor.texture, Brarmor.texWidth, Brarmor.texHeight, "../models/BrumakArmor_D.png");
-	Brarmor.transform = Brbody.transform;
-	sceneObjects.push_back(std::move(Brarmor));
+//    Brumak 
+	Eigen::Matrix4f brumakTransform = translationMatrix(Eigen::Vector3f(1.1f, 0.0f, 6.f)) * rotateYMatrix(M_PI * 1.05) * scaleMatrix(0.3);
 
-	//Cole Train
-	RenderObject Cobody;
-	Cobody.mesh = loadMeshFile("../models/Brumak.obj");
-	lodepng::decode(Cobody.texture, Cobody.texWidth, Cobody.texHeight, "../models/stanford_bunny_albedo.png");
-	Cobody.transform = translationMatrix(Eigen::Vector3f(2.1f, 0.0f, 2.f)) * rotateYMatrix(M_PI * 1.05) * scaleMatrix(0.3);
+	RenderObject brBody;
+	brBody.mesh = loadMeshFile("../models/BrumakBody.obj");
+	lodepng::decode(brBody.texture, brBody.texWidth, brBody.texHeight, "../models/BrumakBody_D.png");
+	brBody.transform = brumakTransform;
+	lodepng::decode(brBody.emissionTexture, brBody.emissionWidth, brBody.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(brBody));
+
+	RenderObject brGuns;
+	brGuns.mesh = loadMeshFile("../models/BrumakGuns.obj");
+	lodepng::decode(brGuns.texture, brGuns.texWidth, brGuns.texHeight, "../models/BrumakWeapons_D.png");
+	brGuns.transform = brumakTransform;
+	lodepng::decode(brGuns.emissionTexture, brGuns.emissionWidth, brGuns.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(brGuns));
+
+	RenderObject brArmor;
+	brArmor.mesh = loadMeshFile("../models/BrumakArmor.obj");
+	lodepng::decode(brArmor.texture, brArmor.texWidth, brArmor.texHeight, "../models/BrumakArmor_D.png");
+	brArmor.transform = brumakTransform;
+	lodepng::decode(brArmor.emissionTexture, brArmor.emissionWidth, brArmor.emissionHeight, "../models/BrumakEmission.png");
+	sceneObjects.push_back(std::move(brArmor));
+
+	//  Cole train 
+	Eigen::Matrix4f coleTransform = translationMatrix(Eigen::Vector3f(1.5f, -1.5f, 9.f)) * translationMatrix(Eigen::Vector3f(0, 0, 9.0)) * scaleMatrix(3.0) * rotateYMatrix(M_PI * 1.05) * translationMatrix(Eigen::Vector3f(0, 0, -9.0));
+
+	// Head
+	RenderObject coHead;
+	coHead.mesh = loadMeshFile("../models/ColeHead.obj");
+	std::cout << "Loaded Cole Head: " << coHead.mesh.vFaces.size() << " faces." << std::endl;
+	lodepng::decode(coHead.texture, coHead.texWidth, coHead.texHeight, "../models/ColeHead_D.png");
+	coHead.transform = coleTransform;
+	lodepng::decode(coHead.emissionTexture, coHead.emissionWidth, coHead.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(coHead));
+
+	// Hair
+	RenderObject coHair;
+	coHair.mesh = loadMeshFile("../models/ColeHair.obj");
+	lodepng::decode(coHair.texture, coHair.texWidth, coHair.texHeight, "../models/ColeHair_D.png");
+	coHair.transform = coleTransform;
+	lodepng::decode(coHair.emissionTexture, coHair.emissionWidth, coHair.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(coHair));
+
+	// Body (Armor)
+	RenderObject coBody;
+	coBody.mesh = loadMeshFile("../models/ColeBody.obj");
+	lodepng::decode(coBody.texture, coBody.texWidth, coBody.texHeight, "../models/ColeBody_D.png");
+	coBody.transform = coleTransform;
+	lodepng::decode(coBody.emissionTexture, coBody.emissionWidth, coBody.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(coBody));
+
+	// Legs
+	RenderObject coLegs;
+	coLegs.mesh = loadMeshFile("../models/ColeLegs.obj");
+	lodepng::decode(coLegs.texture, coLegs.texWidth, coLegs.texHeight, "../models/ColeLegs_D.png");
+	coLegs.transform = coleTransform;
+	lodepng::decode(coLegs.emissionTexture, coLegs.emissionWidth, coLegs.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(coLegs));
+
+	//  Baird
+	Eigen::Matrix4f bairdTransform = translationMatrix(Eigen::Vector3f(1.5f, -1.5f, 9.f)) * translationMatrix(Eigen::Vector3f(0, 0, 9.0)) * scaleMatrix(3.0) * rotateYMatrix(M_PI * 1.05) * translationMatrix(Eigen::Vector3f(0, 0, -9.0));
+
+	// Head
+	RenderObject baHead;
+	baHead.mesh = loadMeshFile("../models/BairdHead.obj");
+	//std::cout << "Loaded Baird Head: " << baHead.mesh.vFaces.size() << " faces." << std::endl;
+	lodepng::decode(baHead.texture, baHead.texWidth, baHead.texHeight, "../models/BairdHead.png");
+	baHead.transform = bairdTransform;
+	lodepng::decode(baHead.emissionTexture, baHead.emissionWidth, baHead.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(baHead));
+
+	// Hair
+	RenderObject baHair;
+	baHair.mesh = loadMeshFile("../models/BairdHair.obj");
+	lodepng::decode(baHair.texture, baHair.texWidth, baHair.texHeight, "../models/BairdHair.png");
+	baHair.transform = bairdTransform;
+	lodepng::decode(baHair.emissionTexture, baHair.emissionWidth, baHair.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(baHair));
+
+	// Body (Armor)
+	RenderObject baBody;
+	baBody.mesh = loadMeshFile("../models/BairdBody.obj");
+	lodepng::decode(baBody.texture, baBody.texWidth, baBody.texHeight, "../models/BairdBody.png");
+	baBody.transform = bairdTransform;
+	lodepng::decode(baBody.emissionTexture, baBody.emissionWidth, baBody.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(baBody));
+
+	// Legs
+	RenderObject baLegs;
+	baLegs.mesh = loadMeshFile("../models/BairdLegs.obj");
+	lodepng::decode(baLegs.texture, baLegs.texWidth, baLegs.texHeight, "../models/BairdLegs.png");
+	baLegs.transform = bairdTransform;
+	lodepng::decode(baLegs.emissionTexture, baLegs.emissionWidth, baLegs.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(baLegs));
+
+	//    Back Building 
+	Eigen::Matrix4f backBuildingBaseTransform = translationMatrix(Eigen::Vector3f(0.0f, 0.0f, 45.0f))
+		* rotateYMatrix(0)
+		* scaleMatrix(1.0f);
+	RenderObject backBuildingBase;
+	backBuildingBase.mesh = loadMeshFile("../models/BackBuildingBase.obj");
+	std::cout << "Loaded Building: " << backBuildingBase.mesh.vFaces.size() << " faces." << std::endl;
+	lodepng::decode(backBuildingBase.texture, backBuildingBase.texWidth, backBuildingBase.texHeight, "../models/Material_baseColor.png");
+	backBuildingBase.transform = backBuildingBaseTransform;
+	lodepng::decode(backBuildingBase.emissionTexture, backBuildingBase.emissionWidth, backBuildingBase.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(backBuildingBase));
 
 
 	for (const auto& obj : sceneObjects) {
-		drawMesh(imageBuffer, zBuffer, obj.mesh, obj.texture, obj.texWidth, obj.texHeight,
+		drawMesh(imageBuffer, zBuffer, obj.mesh, obj.texture, obj.texWidth, obj.texHeight, obj.emissionTexture, obj.emissionWidth, obj.emissionHeight, 
 			obj.transform, worldToClip, lights, width, height);
 	}
 	
