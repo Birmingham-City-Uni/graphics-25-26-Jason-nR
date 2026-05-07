@@ -374,7 +374,7 @@ int main()
 	//lights.emplace_back(new SpotLight(Eigen::Vector3f(10.0f, 0.0f, 0.0f), Eigen::Vector3f(0.f, 1.f, 0.0f), Eigen::Vector3f(0, -1, 0), M_PI/8));
 
 //    Brumak 
-	Eigen::Matrix4f brumakTransform = translationMatrix(Eigen::Vector3f(1.1f, 0.0f, 6.f)) * rotateYMatrix(M_PI * 1.05) * scaleMatrix(0.3);
+	Eigen::Matrix4f brumakTransform = translationMatrix(Eigen::Vector3f(1.1f, -0.5f, 6.f)) * rotateYMatrix(M_PI * 1.05) * scaleMatrix(0.3);
 
 	RenderObject brBody;
 	brBody.mesh = loadMeshFile("../models/BrumakBody.obj");
@@ -470,16 +470,55 @@ int main()
 	sceneObjects.push_back(std::move(baLegs));
 
 	//    Back Building 
-	Eigen::Matrix4f backBuildingBaseTransform = translationMatrix(Eigen::Vector3f(0.0f, 0.0f, 45.0f))
-		* rotateYMatrix(0)
-		* scaleMatrix(1.0f);
+	Eigen::Matrix4f backBuildingBaseTransform = translationMatrix(Eigen::Vector3f(-7.0f, -1.0f, 14.0f)) *  rotateYMatrix(M_PI * 1.0) * scaleMatrix(1.0f);
 	RenderObject backBuildingBase;
 	backBuildingBase.mesh = loadMeshFile("../models/BackBuildingBase.obj");
 	std::cout << "Loaded Building: " << backBuildingBase.mesh.vFaces.size() << " faces." << std::endl;
-	lodepng::decode(backBuildingBase.texture, backBuildingBase.texWidth, backBuildingBase.texHeight, "../models/Material_baseColor.png");
+	lodepng::decode(backBuildingBase.texture, backBuildingBase.texWidth, backBuildingBase.texHeight, "../models/BackBuilding.png");
 	backBuildingBase.transform = backBuildingBaseTransform;
 	lodepng::decode(backBuildingBase.emissionTexture, backBuildingBase.emissionWidth, backBuildingBase.emissionHeight, "../models/noEmission.png");
 	sceneObjects.push_back(std::move(backBuildingBase));
+
+	// Right Building
+	Eigen::Matrix4f rightBuildingTransform = translationMatrix(Eigen::Vector3f(-12.4f, -0.4f, 2.0f))  * rotateYMatrix(0) * scaleMatrix(0.5f);
+	RenderObject rightBuilding;
+	rightBuilding.mesh = loadMeshFile("../models/RightBuilding.obj");
+	std::cout << "Loaded Building2: " << rightBuilding.mesh.vFaces.size() << " faces." << std::endl;
+	lodepng::decode(rightBuilding.texture, rightBuilding.texWidth, rightBuilding.texHeight, "../models/RightBuilding.png");
+	rightBuilding.transform = rightBuildingTransform;
+	lodepng::decode(rightBuilding.emissionTexture, rightBuilding.emissionWidth, rightBuilding.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(rightBuilding));
+
+	// Right building window
+	RenderObject rightBuildingWindow;
+	rightBuildingWindow.mesh = loadMeshFile("../models/RightBuildingWindow.obj");
+	std::cout << "Loaded Building window: " << rightBuildingWindow.mesh.vFaces.size() << " faces." << std::endl;
+	lodepng::decode(rightBuildingWindow.texture, rightBuildingWindow.texWidth, rightBuildingWindow.texHeight, "../models/RightBuilding.png");
+	rightBuildingWindow.transform = rightBuildingTransform;
+	lodepng::decode(rightBuildingWindow.emissionTexture, rightBuildingWindow.emissionWidth, rightBuildingWindow.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(rightBuildingWindow));
+
+	// lancer Top
+	Eigen::Matrix4f lancerTopTransform = translationMatrix(Eigen::Vector3f(0.0f, 0.0f, 0.0f)) * rotateYMatrix(0) * scaleMatrix(1.0f);
+	RenderObject lancerTop;
+	lancerTop.mesh = loadMeshFile("../models/LancerTop.obj");
+	std::cout << "Loaded Lancer Top: " << lancerTop.mesh.vFaces.size() << " faces." << std::endl;
+	lodepng::decode(lancerTop.texture, lancerTop.texWidth, lancerTop.texHeight, "../models/LancerTop.png");
+	lancerTop.transform = lancerTopTransform;
+	lodepng::decode(lancerTop.emissionTexture, lancerTop.emissionWidth, lancerTop.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(lancerTop));
+
+	// floor 
+	Eigen::Matrix4f floorTransform = translationMatrix(Eigen::Vector3f(0.0f, -2.0f, 00.0f))
+		* rotateXMatrix(0) // Flip it 180 degrees so the "top" faces up
+		* scaleMatrix(1.0f);
+	RenderObject floor;
+	floor.mesh = loadMeshFile("../models/Floor.obj");
+	std::cout << "Loaded Floor: " << floor.mesh.vFaces.size() << " faces." << std::endl;
+	lodepng::decode(floor.texture, floor.texWidth, floor.texHeight, "../models/floor.png");
+	floor.transform = floorTransform;
+	lodepng::decode(floor.emissionTexture, floor.emissionWidth, floor.emissionHeight, "../models/noEmission.png");
+	sceneObjects.push_back(std::move(floor));
 
 
 	for (const auto& obj : sceneObjects) {

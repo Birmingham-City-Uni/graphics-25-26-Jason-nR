@@ -87,11 +87,11 @@ template<typename T> T coeffWiseMultiply(const T& l, const T& r)
 bool outsideClipBox(const Eigen::Vector4f& v)
 {
 	return
-		v.x() < -1.5f ||
-		v.y() < -1.5f ||
+		v.x() < -1.7f ||
+		v.y() < -1.7f ||
 		v.z() < -1.f ||
-		v.x() > 1.5f ||
-		v.y() > 1.5f ||
+		v.x() > 1.7f ||
+		v.y() > 1.7f ||
 		v.z() > 1.f;
 }
 

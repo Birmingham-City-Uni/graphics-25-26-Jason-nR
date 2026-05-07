@@ -1,0 +1,12 @@
+# Blender 5.0.1 MTL File: 'DavidFileSceneGears.blend'
+# www.blender.org
+
+newmtl COG_WeaponShader_Lancer_SP
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd C:/Users/Jason/Downloads/lancer/textures/COG_AssaultRifle_II_D.tga.png
