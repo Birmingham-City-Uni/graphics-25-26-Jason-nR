@@ -58,10 +58,10 @@ Eigen::Matrix4f projectionMatrix(int height, int width, float horzFov = 70.f*M_P
 void findScreenBoundingBox(const Triangle& t, int width, int height, int& minX, int& minY, int& maxX, int& maxY)
 {
 	// Find a bounding box around the triangle
-	minX = std::min(std::min(t.screen[0].x(), t.screen[1].x()), t.screen[2].x());
-	minY = std::min(std::min(t.screen[0].y(), t.screen[1].y()), t.screen[2].y());
-	maxX = std::max(std::max(t.screen[0].x(), t.screen[1].x()), t.screen[2].x());
-	maxY = std::max(std::max(t.screen[0].y(), t.screen[1].y()), t.screen[2].y());
+	minX = std::max(0, (int)floorf(std::min({ t.screen[0].x(), t.screen[1].x(), t.screen[2].x() })));
+	minY = std::max(0, (int)floorf(std::min({ t.screen[0].y(), t.screen[1].y(), t.screen[2].y() })));
+	maxX = std::min(width - 1, (int)ceilf(std::max({ t.screen[0].x(), t.screen[1].x(), t.screen[2].x() })));
+	maxY = std::min(height - 1, (int)ceilf(std::max({ t.screen[0].y(), t.screen[1].y(), t.screen[2].y() })));
 
 	// Constrain it to lie within the image.
 	minX = std::min(std::max(minX, 0), width-1);
@@ -76,7 +76,11 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 	const Triangle& t,
 	const std::vector<std::unique_ptr<Light>>& lights,
 	const std::vector<uint8_t>& albedoTexture, int texWidth, int texHeight,
-	const std::vector<uint8_t>& emissionTexture,  int emissionWidth, int emissionHeight)
+	const std::vector<uint8_t>& emissionTexture,  int emissionWidth, int emissionHeight,
+	const Eigen::Vector3f& objEmissionColor, 
+	float shininess, 
+	float specularStrength,  
+	const Eigen::Vector3f& cameraPos)
 {
 	int minX, minY, maxX, maxY;
 	findScreenBoundingBox(t, width, height, minX, minY, maxX, maxY);
@@ -176,7 +180,7 @@ void drawTriangle(std::vector<uint8_t>& image, int width, int height,
 			int eTexR = texR * (float)emissionHeight / texHeight;
 			Color texEmission = getPixel(emissionTexture, eTexC, eTexR, emissionWidth, emissionHeight);
 			float emission = texEmission.r/255.0f;
-			Eigen::Vector3f emissionColor(1, 1, 0);
+			Eigen::Vector3f emissionColor = objEmissionColor;
 
 			// Convert it into an Eigen::Vector3f as an albedo
 			// (Optional bonus task, if you checked out the slides on gamma correction:
@@ -239,7 +243,8 @@ void drawMesh(std::vector<unsigned char>& image,
 	const Eigen::Matrix4f& modelToWorld, 
 	const Eigen::Matrix4f& worldToClip, 
 	const std::vector<std::unique_ptr<Light>>& lights,
-	int width, int height)
+	int width, int height,
+	const Eigen::Vector3f& objEmissionColor)
 {
 	for (int i = 0; i < mesh.vFaces.size(); ++i) {
 
@@ -280,9 +285,12 @@ void drawMesh(std::vector<unsigned char>& image,
 		vClip1 /= vClip1.w();
 		vClip2 /= vClip2.w();
 
-		if (outsideClipBox(vClip0) || outsideClipBox(vClip1) || outsideClipBox(vClip2))
+		if (outsideClipBox(vClip0) && outsideClipBox(vClip1) && outsideClipBox(vClip2))
 		{
+			continue;
+		}
 
+		if (vClip0.w() < 0.1f || vClip1.w() < 0.1f || vClip2.w() < 0.1f) {
 			continue;
 		}
 
@@ -307,7 +315,7 @@ void drawMesh(std::vector<unsigned char>& image,
 		t.texs[1] = mesh.texs[mesh.tFaces[i][1]];
 		t.texs[2] = mesh.texs[mesh.tFaces[i][2]];
 
-		drawTriangle(image, width, height, zBuffer, t, lights, albedoTexture, texWidth, texHeight, emissionTexture, emissionWidth, emissionHeight);
+		drawTriangle(image, width, height, zBuffer, t, lights, albedoTexture, texWidth, texHeight, emissionTexture, emissionWidth, emissionHeight, objEmissionColor);
 	}
 }
 
@@ -317,6 +325,10 @@ struct RenderObject {
 	std::vector<uint8_t> emissionTexture;
 	unsigned int texWidth, texHeight, emissionWidth, emissionHeight;
 	Eigen::Matrix4f transform;
+	Eigen::Vector3f emissionColor = Eigen::Vector3f(1, 1, 1); 
+
+	float shininess = 32.0f;
+	float specularStrength = 0.5f;
 };
 
 int main()
@@ -395,6 +407,7 @@ int main()
 	lodepng::decode(brArmor.texture, brArmor.texWidth, brArmor.texHeight, "../models/BrumakArmor_D.png");
 	brArmor.transform = brumakTransform;
 	lodepng::decode(brArmor.emissionTexture, brArmor.emissionWidth, brArmor.emissionHeight, "../models/BrumakEmission.png");
+	brArmor.emissionColor = Eigen::Vector3f(1.0f, 1.0f, 0.0f);
 	sceneObjects.push_back(std::move(brArmor));
 
 	//  Cole train 
@@ -458,7 +471,8 @@ int main()
 	baBody.mesh = loadMeshFile("../models/BairdBody.obj");
 	lodepng::decode(baBody.texture, baBody.texWidth, baBody.texHeight, "../models/BairdBody.png");
 	baBody.transform = bairdTransform;
-	lodepng::decode(baBody.emissionTexture, baBody.emissionWidth, baBody.emissionHeight, "../models/noEmission.png");
+	lodepng::decode(baBody.emissionTexture, baBody.emissionWidth, baBody.emissionHeight, "../models/BairdEmission.png");
+	baBody.emissionColor = Eigen::Vector3f(0.4f, 0.7f, 1.0f);
 	sceneObjects.push_back(std::move(baBody));
 
 	// Legs
@@ -498,32 +512,14 @@ int main()
 	lodepng::decode(rightBuildingWindow.emissionTexture, rightBuildingWindow.emissionWidth, rightBuildingWindow.emissionHeight, "../models/noEmission.png");
 	sceneObjects.push_back(std::move(rightBuildingWindow));
 
-	// lancer Top
-	Eigen::Matrix4f lancerTopTransform = translationMatrix(Eigen::Vector3f(0.0f, 0.0f, 0.0f)) * rotateYMatrix(0) * scaleMatrix(1.0f);
-	RenderObject lancerTop;
-	lancerTop.mesh = loadMeshFile("../models/LancerTop.obj");
-	std::cout << "Loaded Lancer Top: " << lancerTop.mesh.vFaces.size() << " faces." << std::endl;
-	lodepng::decode(lancerTop.texture, lancerTop.texWidth, lancerTop.texHeight, "../models/LancerTop.png");
-	lancerTop.transform = lancerTopTransform;
-	lodepng::decode(lancerTop.emissionTexture, lancerTop.emissionWidth, lancerTop.emissionHeight, "../models/noEmission.png");
-	sceneObjects.push_back(std::move(lancerTop));
 
-	// floor 
-	Eigen::Matrix4f floorTransform = translationMatrix(Eigen::Vector3f(0.0f, -2.0f, 00.0f))
-		* rotateXMatrix(0) // Flip it 180 degrees so the "top" faces up
-		* scaleMatrix(1.0f);
-	RenderObject floor;
-	floor.mesh = loadMeshFile("../models/Floor.obj");
-	std::cout << "Loaded Floor: " << floor.mesh.vFaces.size() << " faces." << std::endl;
-	lodepng::decode(floor.texture, floor.texWidth, floor.texHeight, "../models/floor.png");
-	floor.transform = floorTransform;
-	lodepng::decode(floor.emissionTexture, floor.emissionWidth, floor.emissionHeight, "../models/noEmission.png");
-	sceneObjects.push_back(std::move(floor));
+
+
 
 
 	for (const auto& obj : sceneObjects) {
 		drawMesh(imageBuffer, zBuffer, obj.mesh, obj.texture, obj.texWidth, obj.texHeight, obj.emissionTexture, obj.emissionWidth, obj.emissionHeight, 
-			obj.transform, worldToClip, lights, width, height);
+			obj.transform, worldToClip, lights, width, height, obj.emissionColor);
 	}
 	
 	
